@@ -1,0 +1,44 @@
+data(){
+            return {
+                arr: [1, 2, 3]//arr这个数据始终都存在于一个object数据对象中
+            }
+        }
+        let arr = [1, 2, 3]
+        arr.push(4)
+        Array.prototype.newPush = function (val) {//Array型数据还是在getter中收集依赖
+            console.log('arr被修改了')
+            this.push(val)//原生push方法定义个一个新的newPush方法
+        }
+        arr.newPush(4)
+        const arrayProto = Array.prototype
+        // 创建一个对象作为拦截器
+        export const arrayMethods = Object.create(arrayProto)
+
+        // 改变数组自身内容的7个方法
+        const methodsToPatch = [//原型中可以改变数组自身内容的方法有7个
+            'push',
+            'pop',
+            'shift',
+            'unshift',
+            'splice',
+            'sort',
+            'reverse'
+        ]
+
+        /**
+         * Intercept mutating methods and emit events
+         */
+        methodsToPatch.forEach(function (method) {
+            const original = arrayProto[method]      // 缓存原生方法
+            Object.defineProperty(arrayMethods, method, {//原型的空对象arrayMethods
+            //接着在arrayMethods上使用object.defineProperty方法将那些可以改变数组自身的7个方法遍历逐个进行封装
+                enumerable: false,
+                configurable: true,
+                writable: true,
+                value: function mutator(...args) {//而arrayMethods.push就是封装的新函数mutator
+                    const result = original.apply(this, args)
+                    //而mutator函数内部执行了original函数，这个original函数就是Array.prototype上对应的原生方法。
+                    return result
+                }
+            })
+        })
